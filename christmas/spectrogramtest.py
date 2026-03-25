@@ -3,12 +3,15 @@ import librosa
 import librosa.display
 import matplotlib.pyplot as plot
 import pretty_midi
+import numpy as np
 
+# constants / parameters
+HOP_LENGTH = 600
+
+#sharty code
 base = os.path.dirname(__file__)
-# midi_path = os.path.join(base, "..", "data", "maestro_subset", "midi_files", "MIDI-Unprocessed_SMF_02_R1_2004_01-05_ORIG_MID--AUDIO_02_R1_2004_05_Track05_wav.midi")
+midi_path = os.path.join(base, "..", "data", "maestro_subset", "midi_files", "MIDI-Unprocessed_SMF_02_R1_2004_01-05_ORIG_MID--AUDIO_02_R1_2004_05_Track05_wav.midi")
 path = os.path.join(base, "..", "data", "maestro_subset", "wav_files", "MIDI-Unprocessed_SMF_02_R1_2004_01-05_ORIG_MID--AUDIO_02_R1_2004_05_Track05_wav.wav")
-
-# midi = pretty_midi.PrettyMIDI(midi_path)
 
 y, sr = librosa.load(path, sr = None)
 print(sr)
@@ -17,13 +20,71 @@ mel = librosa.feature.melspectrogram(
     y=y,
     sr=sr,
     n_fft=2048,
-    hop_length=600,
+    hop_length=HOP_LENGTH,
     n_mels=128
 )
 
 mel_db = librosa.power_to_db(mel)
 
-librosa.display.specshow(mel_db, sr=sr, hop_length=512)
-plot.colorbar()
-plot.title("Mel Spectrogram")
+
+###---- Processing MIDI files -----
+
+# get and initialize midi var, calculate matching frame rate, generate actual piano roll.
+midi = pretty_midi.PrettyMIDI(midi_path)
+frame_rate = sr / HOP_LENGTH
+piano_roll = midi.get_piano_roll(fs=frame_rate)
+
+# Transpose to match spectrogram (time, pitch)
+piano_roll = piano_roll.T
+
+# Keep piano range (21–108)
+piano_roll = piano_roll[:, 21:109]
+
+# Binarize key press (on/off)
+piano_roll = (piano_roll > 0).astype(np.float32)
+
+###---------Meow PMf--------
+
+mel_db = mel_db.T # transpose so time is on y axis
+
+###---------Trim both matrices to account for potential rounding issues at the end--------
+
+min_len = min(mel_db.shape[0], piano_roll.shape[0])
+
+mel_db = mel_db[:min_len]
+piano_roll = piano_roll[:min_len]
+
+###-----------Meow-------------
+
+#takes in a piano roll and returns a matrix labeling only the onsets.
+def get_onsets(go_piano_roll):
+    onset = np.zeros_like(go_piano_roll)
+    onset[0] = go_piano_roll[0]  # handle first timestep
+    onset[1:] = (go_piano_roll[1:] == 1) & (go_piano_roll[:-1] == 0)
+    return onset.astype(np.float32)
+
+# process a wav file and it's respective MIDI file. 
+# Returns the spectrogram, piano roll, and onset label for the files. Need to do this part.
+def process_file(audio_path, midi_path):
+    return mel, piano_roll, onsets
+
+
+
+
+
+
+
+
+
+# used to display a test spectrogram
+# librosa.display.specshow(mel_db, sr=sr, hop_length=HOP_LENGTH)
+# plot.colorbar()
+# plot.title("Mel Spectrogram")
+# plot.show()
+
+print(piano_roll.shape)
+print(sr / HOP_LENGTH)  # fs
+
+plot.imshow(piano_roll[:2000].T, aspect='auto', origin='lower')
+plot.title("Piano Roll (first 200 frames)")
 plot.show()
