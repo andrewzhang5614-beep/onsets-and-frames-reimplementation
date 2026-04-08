@@ -25,14 +25,14 @@ def get_onsets(go_piano_roll):
 # Returns the spectrogram, piano roll, and onset label for the files. Need to do this part.
 def process_file(audio_path, midi_path):
     y, sr = librosa.load(audio_path, sr = None)
-    print(sr)
+    # print(sr)
 
     mel = librosa.feature.melspectrogram(
-        y=y,
-        sr=sr,
-        n_fft=2048,
-        hop_length=HOP_LENGTH,
-        n_mels=128
+        y=y, #waveform
+        sr=sr, #sample rate
+        n_fft=2048, # how many samples to look at in a window to determine frequency
+        hop_length=HOP_LENGTH, #how much ye move the window above.
+        n_mels=128  #number of frequency buckets you have. like frequencies 1 - 10 go in bucket 1, 11 - 20 b2, etc.
     )
 
     mel_db = librosa.power_to_db(mel)
