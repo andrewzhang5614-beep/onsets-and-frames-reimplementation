@@ -97,7 +97,7 @@ def process_file(audio_path, midi_path):
 # plot.show()
 
 # call process file on the current absolute path.
-mel, pr, on = process_file(path, midi_path)
-print(mel.shape)  # should be (time, 128)
-print(pr.shape)   # should be (time, 88)
-print(on.shape)   # should be (time, 88)
+# mel, pr, on = process_file(path, midi_path)
+# print(mel.shape)  # should be (time, 128)
+# print(pr.shape)   # should be (time, 88)
+# print(on.shape)   # should be (time, 88)
