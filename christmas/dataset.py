@@ -5,7 +5,7 @@ import numpy as np  # optional (only if needed)
 import os
 
 
-class PianoDataset:
+class PianoDataset(Dataset):
     #init and store list of pairs of audio and midi paths.
     def __init__(self, max_len=1000):
         self.file_pairs = []
