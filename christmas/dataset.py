@@ -4,6 +4,10 @@ from torch.utils.data import Dataset
 import numpy as np  # optional (only if needed)
 import os
 
+# set up cache, cache is created at the same level as this file.
+base = os.path.dirname(__file__)
+cache_dir = os.path.join(base, "cache")
+os.makedirs(cache_dir, exist_ok=True)
 
 class PianoDataset(Dataset):
     #init and store list of pairs of audio and midi paths.
@@ -37,9 +41,20 @@ class PianoDataset(Dataset):
 
     #return the relevant form of data for a piece of data at the given index.
     def __getitem__(self, idx):
-        audio_path, midi_path = self.file_pairs[idx]
-        mel, pr, on = process_file(audio_path, midi_path)
 
+        cache_path = os.path.join(cache_dir, f"{idx}.pt")
+
+        # if there is a cache, check if the pre-processed data has already been stored there.
+        if os.path.exists(cache_path):
+            mel, pr, on = torch.load(cache_path, weights_only=False)
+            print("loading from cache")
+
+        #else just process the data like normal and save it into the cache.
+        else:
+            audio_path, midi_path = self.file_pairs[idx]
+            mel, pr, on = process_file(audio_path, midi_path)
+
+            torch.save((mel, pr, on), cache_path)
 
         # --- Handle length (crop) ---
         mel = mel[:self.max_len]

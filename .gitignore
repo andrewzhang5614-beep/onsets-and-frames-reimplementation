@@ -212,3 +212,8 @@ __marimo__/
 #ignore the data folder with the audio files.
 data/
 .vscode/
+
+# cache files
+cache/
+*.pt
+*.npy

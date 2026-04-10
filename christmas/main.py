@@ -6,44 +6,24 @@ from torch.utils.data import DataLoader
 from dataset import PianoDataset
 from model import Model
 
+# conditional check to ensure workers in dataloader works properly to speed things up.
+if __name__ == "__main__":
+    dataset = PianoDataset()
 
-dataset = PianoDataset()
+    loader = DataLoader(dataset, batch_size=4, shuffle=True, num_workers=8)
 
-# print(len(dataset))  # should be ~13 or whatever you added
+    model = Model()
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    loss_fn = nn.BCEWithLogitsLoss()
 
-# mel, pr, on = dataset[0]
+    for mel, pr, on in loader:
+        pred = model(mel)
 
-# print(mel.shape)
-# print(pr.shape)
-# print(on.shape)
+        loss = loss_fn(pred, pr)
 
-loader = DataLoader(dataset, batch_size=4, shuffle=True)
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
 
-
-# for mel, pr, on in loader:
-#     print(mel.shape)
-#     print(pr.shape)
-#     print(on.shape)
-#     break
-
-
-
-
-
-
-
-model = Model()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-loss_fn = nn.BCEWithLogitsLoss()
-
-for mel, pr, on in loader:
-    pred = model(mel)
-
-    loss = loss_fn(pred, pr)
-
-    loss.backward()
-    optimizer.step()
-    optimizer.zero_grad()
-
-    print(loss.item())
-    # break  # just test one batch first
+        print(loss.item())
+        # break  # just test one batch first
