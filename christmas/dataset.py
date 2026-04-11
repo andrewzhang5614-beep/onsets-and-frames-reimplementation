@@ -1,8 +1,8 @@
 from data_processing import process_file
 import torch
 from torch.utils.data import Dataset
-import numpy as np  # optional (only if needed)
 import os
+import random
 
 # set up cache, cache is created at the same level as this file.
 base = os.path.dirname(__file__)
@@ -56,10 +56,20 @@ class PianoDataset(Dataset):
 
             torch.save((mel, pr, on), cache_path)
 
-        # --- Handle length (crop) ---
-        mel = mel[:self.max_len]
-        pr  = pr[:self.max_len]
-        on  = on[:self.max_len]
+
+        #randomizes where the sample of the song is taken from.
+        if mel.shape[0] <= self.max_len:
+            start = 0
+        else:
+            max_start = mel.shape[0] - self.max_len
+            start = random.randint(0, max_start)
+
+        end = start + self.max_len
+
+        # --- cut length ---
+        mel = mel[start:end]
+        pr  = pr[start:end]
+        on  = on[start:end]
 
         # --- Convert to tensors ---
         mel = torch.tensor(mel, dtype=torch.float32)
