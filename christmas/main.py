@@ -16,14 +16,31 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     loss_fn = nn.BCEWithLogitsLoss()
 
+    #This is the training for the frame-only model (only returns 1 layer and stuff)
+
+    # for mel, pr, on in loader:
+    #     pred = model(mel)
+
+    #     loss = loss_fn(pred, pr)
+
+    #     loss.backward()
+    #     optimizer.step()
+    #     optimizer.zero_grad()
+
+    #     print(loss.item())
+    #     # break  # just test one batch first
+
     for mel, pr, on in loader:
-        pred = model(mel)
+        frame_pred, onset_pred = model(mel) #get the frame and onset layers from the model
 
-        loss = loss_fn(pred, pr)
+        loss_frame = loss_fn(frame_pred, pr) #get loss for both of them
+        loss_onset = loss_fn(onset_pred, on)
 
-        loss.backward()
+        loss = loss_frame + loss_onset
+
+        loss.backward() #updates weights, called backprop. 
         optimizer.step()
         optimizer.zero_grad()
 
         print(loss.item())
-        # break  # just test one batch first
+            # break  # just test one batch first
