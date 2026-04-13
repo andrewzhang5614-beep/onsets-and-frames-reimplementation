@@ -8,10 +8,24 @@ import matplotlib.pyplot as plt
 from dataset import PianoDataset
 from model import Model
 
+#evaluation (oh no)
+def compute_f1(pred, gt):
+    pred = pred.int()
+    gt = gt.int()
+
+    tp = ((pred == 1) & (gt == 1)).sum().item()
+    fp = ((pred == 1) & (gt == 0)).sum().item()
+    fn = ((pred == 0) & (gt == 1)).sum().item()
+
+    precision = tp / (tp + fp + 1e-8)
+    recall = tp / (tp + fn + 1e-8)
+    f1 = 2 * precision * recall / (precision + recall + 1e-8)
+
+    return precision, recall, f1
 
 # conditional check to ensure workers in dataloader works properly to speed things up.
 if __name__ == "__main__":
-    dataset = PianoDataset(max_len=1000)
+    dataset = PianoDataset(max_len=50000)
 
     #90 percent is for training, 10 is to test the model on songs it hasnt seen yet.
     train_size = int(0.9 * len(dataset))
@@ -34,7 +48,7 @@ if __name__ == "__main__":
 
 
     # ---- TEST (Option A: single sample) ----
-    mel, pr, on = test_dataset[1]
+    mel, pr, on = test_dataset[5]
 
     mel = mel.unsqueeze(0)  # add batch dim
 
@@ -46,12 +60,20 @@ if __name__ == "__main__":
     onset_pred = torch.sigmoid(onset_pred)
 
     # Threshold
-    frame_bin = (frame_pred > 0.16)
-    onset_bin = (onset_pred > 0.20)
+    frame_bin = (frame_pred > 0.1)
+    onset_bin = (onset_pred > 0.305)
 
     # Post-processing
     frame_bin = frame_bin[0]   # remove batch dim → (T, 88)
     onset_bin = onset_bin[0]
+
+    #F1 Evaluation for the frames and onsets separately
+    p, r, f1 = compute_f1(frame_bin, pr)
+    print("Frame F1:", f1)
+
+    p, r, f1 = compute_f1(onset_bin, on)
+    print("Onset F1:", f1)
+
 
     T, P = frame_bin.shape
     combined = torch.zeros_like(frame_bin)
@@ -69,6 +91,11 @@ if __name__ == "__main__":
                     combined[t, p] = 1
                 else:
                     active = False
+
+    #Eval for the predicted notes using post processing for onsets and frames.
+    p, r, f1 = compute_f1(combined, pr)
+    print("Combined F1:", f1)
+
 
     fig, axs = plt.subplots(4, 1, figsize=(10, 8))
 

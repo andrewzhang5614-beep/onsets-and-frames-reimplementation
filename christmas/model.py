@@ -43,11 +43,20 @@ class Model(nn.Module):
             nn.Conv2d(1, 32, 3, padding=1),
             nn.ReLU(),
             nn.Conv2d(32, 64, 3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(64, 128, 3, padding=1),
             nn.ReLU()
         )
 
-        self.frame_head = nn.Linear(64, 88)
-        self.onset_head = nn.Linear(64, 88)
+        self.lstm = nn.LSTM(
+        input_size=128,
+        hidden_size=128,
+        batch_first=True,
+        bidirectional=True
+        )
+
+        self.frame_head = nn.Linear(256, 88)
+        self.onset_head = nn.Linear(256, 88)
 
     def forward(self, x):
         # x: (batch, time, freq)
@@ -58,7 +67,9 @@ class Model(nn.Module):
 
         x = x.mean(dim=3)    # collapse freq → (batch, 64, time)
 
-        x = x.permute(0, 2, 1)  # → (batch, time, 64)
+        x = x.permute(0, 2, 1)
+
+        x, _ = self.lstm(x)
 
         frame_pred = self.frame_head(x)
         onset_pred = self.onset_head(x)

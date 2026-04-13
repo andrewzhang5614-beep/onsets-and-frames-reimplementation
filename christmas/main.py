@@ -22,7 +22,7 @@ if __name__ == "__main__":
         dataset, [train_size, test_size], generator=generator
     )
 
-    loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=8)
+    loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=10)
 
     model = Model()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
