@@ -11,7 +11,7 @@ from model import Model
 
 # conditional check to ensure workers in dataloader works properly to speed things up.
 if __name__ == "__main__":
-    dataset = PianoDataset(max_len=900)
+    dataset = PianoDataset(max_len=1000)
 
     #90 percent is for training, 10 is to test the model on songs it hasnt seen yet.
     train_size = int(0.9 * len(dataset))
@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
 
     # ---- TEST (Option A: single sample) ----
-    mel, pr, on = test_dataset[0]
+    mel, pr, on = test_dataset[1]
 
     mel = mel.unsqueeze(0)  # add batch dim
 
@@ -46,11 +46,29 @@ if __name__ == "__main__":
     onset_pred = torch.sigmoid(onset_pred)
 
     # Threshold
-    frame_bin = (frame_pred > 0.14)
-    onset_bin = (onset_pred > 0.15)
+    frame_bin = (frame_pred > 0.16)
+    onset_bin = (onset_pred > 0.20)
 
     # Post-processing
-    combined = frame_bin & onset_bin
+    frame_bin = frame_bin[0]   # remove batch dim → (T, 88)
+    onset_bin = onset_bin[0]
+
+    T, P = frame_bin.shape
+    combined = torch.zeros_like(frame_bin)
+
+    for p in range(P):
+        active = False
+
+        for t in range(T):
+            if not active:
+                if onset_bin[t, p]:
+                    active = True
+                    combined[t, p] = 1
+            else:
+                if frame_bin[t, p]:
+                    combined[t, p] = 1
+                else:
+                    active = False
 
     fig, axs = plt.subplots(4, 1, figsize=(10, 8))
 
@@ -59,15 +77,15 @@ if __name__ == "__main__":
     axs[0].set_title("Ground Truth")
 
     # Frame prediction
-    axs[1].imshow(frame_bin[0].T, aspect='auto', origin='lower')
+    axs[1].imshow(frame_bin.T, aspect='auto', origin='lower')
     axs[1].set_title("Frame Prediction")
 
     # Onset prediction
-    axs[2].imshow(onset_bin[0].T, aspect='auto', origin='lower')
+    axs[2].imshow(onset_bin.T, aspect='auto', origin='lower')
     axs[2].set_title("Onset Prediction")
 
     # Combined (post-processing)
-    axs[3].imshow(combined[0].T, aspect='auto', origin='lower')
+    axs[3].imshow(combined.T, aspect='auto', origin='lower')
     axs[3].set_title("Frame + Onset")
 
     plt.tight_layout()

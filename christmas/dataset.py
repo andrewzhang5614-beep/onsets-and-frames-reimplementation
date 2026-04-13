@@ -47,7 +47,7 @@ class PianoDataset(Dataset):
         # if there is a cache, check if the pre-processed data has already been stored there.
         if os.path.exists(cache_path):
             mel, pr, on = torch.load(cache_path, weights_only=False)
-            print("loading from cache")
+            # print("loading from cache")
 
         #else just process the data like normal and save it into the cache.
         else:

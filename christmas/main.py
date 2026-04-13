@@ -29,7 +29,7 @@ if __name__ == "__main__":
     loss_fn_frame = nn.BCEWithLogitsLoss()
 
     #weighted loss, to prioritize aactually predicting onsets over just keeping silent / super low values.
-    pos_weight = torch.ones(88) * 50.0
+    pos_weight = torch.ones(88) * 15.0
     loss_fn_onset = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     #This is the training for the frame-only model (only returns 1 layer and stuff)
@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     #         # break  # just test one batch first
 
-    for epoch in range(5):
+    for epoch in range(8):
         total_loss = 0
 
         for mel, pr, on in loader:
